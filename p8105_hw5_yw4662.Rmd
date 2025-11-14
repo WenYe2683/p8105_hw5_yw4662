@@ -113,3 +113,62 @@ From the plot, **the sample average of $\mu$ among samples where the null was re
 This happens because conditioning on rejection introduces selection bias. When $\mu$ is small, only samples with unusually large sample means (far above the true $\mu$) produce a p-value below 0.05. These overestimates are exactly the samples that get selected into the rejected group. As a result, the average $\hat\mu$ among rejected samples is systematically inflated.
 
 As $\mu$ becomes large, power approaches 1, meaning nearly all samples reject the null. Because we are no longer selecting only extreme samples, the teal line converges toward the red line, and both approach the true $\mu$. 
+
+## Problem 3
+
+```{r}
+homicide_raw <- read_csv(
+  "https://raw.githubusercontent.com/washingtonpost/data-homicides/master/homicide-data.csv"
+)
+
+# Clean + summarize
+homicide_df <- homicide_raw %>%
+  mutate(
+    city_state = str_c(city, ", ", state),
+    unsolved = disposition %in% c("Closed without arrest", "Open/No arrest")
+  ) %>%
+  group_by(city_state) %>%
+  summarise(
+    total = n(),
+    unsolved = sum(unsolved),
+    .groups = "drop"
+  )
+
+# Baltimore
+baltimore <- homicide_df %>% filter(city_state == "Baltimore, MD")
+
+baltimore_test <- prop.test(baltimore$unsolved, baltimore$total) %>% tidy()
+baltimore_test %>% select(estimate, conf.low, conf.high)
+
+# prop.test for all cities
+city_tests <- homicide_df %>%
+  mutate(
+    test = map2(unsolved, total, \(x,n) prop.test(x,n) %>% tidy())
+  ) %>%
+  unnest(test) %>%
+  select(city_state, estimate, conf.low, conf.high)
+
+```
+
+```{r fig.width = 12, fig.height = 14}
+# Plot
+city_tests %>%
+  arrange(desc(estimate)) %>%
+  mutate(city_state = fct_reorder(city_state, estimate)) %>%
+  ggplot(aes(x = estimate, y = city_state)) + 
+  geom_point(color = "#0057A8") + 
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high)) +
+  coord_flip() + 
+  labs(
+    title = "Proportion of unsolved homicides by city",
+    x = "Estimated proportion (95% CI)",
+    y = NULL
+  ) + 
+  theme_minimal(base_size = 13) + 
+  theme(
+    plot.margin = margin(10, 30, 10, 60)
+  ) + 
+  coord_cartesian(clip = "off")
+```
+
+
