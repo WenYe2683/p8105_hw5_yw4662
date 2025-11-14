@@ -108,6 +108,8 @@ power_df %>%
 
 ### Comment
 
+As the true mean grows from 0 to 6, the power increases monotonically from roughly 5\% to nearly 100\%. Larger effect sizes make it easier to reject the null.
+
 From the plot, **the sample average of $\mu$ among samples where the null was rejected is not equal to the true $\mu$**, especially for smaller effect sizes. For smaller true means, the teal line lies above the red line and above the actual $\mu$, indicating positive bias among the subset of samples that produced a significant result.
 
 This happens because conditioning on rejection introduces selection bias. When $\mu$ is small, only samples with unusually large sample means (far above the true $\mu$) produce a p-value below 0.05. These overestimates are exactly the samples that get selected into the rejected group. As a result, the average $\hat\mu$ among rejected samples is systematically inflated.
@@ -133,7 +135,12 @@ homicide_df <- homicide_raw %>%
     unsolved = sum(unsolved),
     .groups = "drop"
   )
+```
 
+### Description
+The raw homicide dataset from the Washington Post contains one row per homicide case across 50 large U.S. cities, with variables including victim demographics (name, age, sex, race), location (city, state, latitude, longitude), year, and disposition.
+
+```{r}
 # Baltimore
 baltimore <- homicide_df %>% filter(city_state == "Baltimore, MD")
 
@@ -147,8 +154,8 @@ city_tests <- homicide_df %>%
   ) %>%
   unnest(test) %>%
   select(city_state, estimate, conf.low, conf.high)
-
 ```
+
 
 ```{r fig.width = 12, fig.height = 14}
 # Plot
